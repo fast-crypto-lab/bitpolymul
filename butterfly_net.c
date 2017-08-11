@@ -25,6 +25,9 @@
 ///
 //////////////////////////////////////////////////////
 
+#include "gf2128_cantor_iso.h"
+
+//#define _SIMPLE_TOWER_
 
 static
 void butterfly_0( __m128i * poly , unsigned unit )
@@ -40,7 +43,11 @@ static
 void butterfly( __m128i * poly , unsigned unit , unsigned ska )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
+#ifdef _SIMPLE_TOWER_
 	bitmatrix_prod_64x128_4R_sse( ska_iso , gfTowerto2128_4R , ska );
+#else
+	bitmatrix_prod_64x128_4R_sse( ska_iso , gfCantorto2128_4R , ska );
+#endif
 	//__m128i a = _mm_load_si128( (__m128i*) ska_iso );
 
 	unsigned unit_2= unit/2;
@@ -58,7 +65,11 @@ static
 void i_butterfly( __m128i * poly , unsigned unit , unsigned ska )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
+#ifdef _SIMPLE_TOWER_
 	bitmatrix_prod_64x128_4R_sse( ska_iso , gfTowerto2128_4R , ska );
+#else
+	bitmatrix_prod_64x128_4R_sse( ska_iso , gfCantorto2128_4R , ska );
+#endif
 	//__m128i a = _mm_load_si128( (__m128i*) ska_iso );
 
 	unsigned unit_2= unit/2;
@@ -95,7 +106,11 @@ void butterfly_net_half_inp_clmul( uint64_t * fx , unsigned n_fx )
 
 		butterfly_0( poly , unit );
 		for(unsigned j=1;j<num;j++) {
+#ifdef _SIMPLE_TOWER_
 			butterfly( poly + j*unit , unit , get_s_k_a( i-1 , j ) );
+#else
+			butterfly( poly + j*unit , unit , get_s_k_a_cantor( i-1 , j*unit ) );
+#endif
 		}
 	}
 }
@@ -117,7 +132,11 @@ void i_butterfly_net_clmul( uint64_t * fx , unsigned n_fx )
 
 		butterfly_0( poly , unit );
 		for(unsigned j=1;j<num;j++) {
+#ifdef _SIMPLE_TOWER_
 			i_butterfly( poly + j*unit , unit , get_s_k_a( i-1 , j ) );
+#else
+			i_butterfly( poly + j*unit , unit , get_s_k_a_cantor( i-1 , j*unit ) );
+#endif
 		}
 	}
 }

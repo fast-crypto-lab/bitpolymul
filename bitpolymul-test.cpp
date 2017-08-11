@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "benchmark.h"
 #include "byte_inline_func.h"
@@ -43,7 +44,7 @@ void polymul_gf2x( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 
 //#define _EXIT_WHILE_FAIL_
 
-#define LEN 1024*32
+#define LEN 1024*64
 
 #define _DYNA_ALLOC_
 
@@ -65,22 +66,31 @@ extern struct benchmark bm_pointmul_tower;
 
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
 
-int main()
+int main( int argc , char ** argv )
 {
 	unsigned char seed[32] = {0};
 
 	unsigned log2_len = LOG2(LEN);
 	if( log2_len == LOG2(LEN-1) ) log2_len++;
-	printf("Multiplication test:\ninput poly len: 2^%d x 64 bit.\n", log2_len );
+	if( 2 == argc ) {
+		log2_len = atoi( argv[1] );
+		if( log2_len > 30 || 0 == log2_len ) {
+			printf("Benchmark binary polynomial multiplications.\nUsage: exe [log2_len]\n\n");
+			exit(-1);
+		}
+	}
+	unsigned len = 1<<log2_len;
+
+	printf("Multiplication test:\ninput poly len: 2^%d x 64 bit. Benchmark in micro seonds.\n", log2_len );
 
 #ifdef _DYNA_ALLOC_
-        uint64_t * poly1 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*LEN );
+        uint64_t * poly1 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*len );
         if( NULL == poly1 ) { printf("alloc 1 fail.\n"); exit(-1); }
-        uint64_t * poly2 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*LEN );
+        uint64_t * poly2 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*len );
         if( NULL == poly2 ) { printf("alloc 2 fail.\n"); exit(-1); }
-        uint64_t * poly3 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*LEN );
+        uint64_t * poly3 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*len );
         if( NULL == poly3 ) { printf("alloc 3 fail.\n"); exit(-1); }
-        uint64_t * poly4 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*LEN );
+        uint64_t * poly4 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*len );
         if( NULL == poly4 ) { printf("alloc 4 fail.\n"); exit(-1); }
 #else
 	uint64_t poly1[LEN] __attribute__((aligned(32)));
@@ -89,8 +99,8 @@ int main()
 	uint64_t poly4[LEN*2] __attribute__((aligned(32)));
 #endif
 
-	for(unsigned q=0;q<LEN;q++) poly1[q] = rand();
-	for(unsigned q=0;q<LEN;q++) poly2[q] = rand();
+	for(unsigned q=0;q<len;q++) poly1[q] = rand();
+	for(unsigned q=0;q<len;q++) poly2[q] = rand();
 	//poly2[rand()%LEN] = 1;
 
 
@@ -112,15 +122,15 @@ bm_init(&bm_pointmul_tower);
 #endif
 
 	//byte_rand( poly1 , LEN );
-	for(unsigned i=0;i<LEN;i++) poly1[i] = i;
-	memset( poly2 , 0 , sizeof(uint64_t)*LEN );
+	for(unsigned i=0;i<len;i++) poly1[i] = i;
+	memset( poly2 , 0 , sizeof(uint64_t)*len );
 	poly2[0] = 1;
 	//memcpy( poly2 , poly1 , LEN*sizeof(uint64_t) );
-	bm_func1( poly3 , poly1 , poly2 , LEN );
-	if( 32 >= LEN ) {
-	printf("poly1 :" ); byte_dump( poly1 , LEN ); puts("");
-	printf("poly2 :" ); byte_dump( poly2 , LEN ); puts("");
-	printf("poly3 :" ); byte_dump( poly3 , LEN*2 ); puts("");
+	bm_func1( poly3 , poly1 , poly2 , len );
+	if( 32 >= len ) {
+	printf("poly1 :" ); byte_dump( poly1 , len ); puts("");
+	printf("poly2 :" ); byte_dump( poly2 , len ); puts("");
+	printf("poly3 :" ); byte_dump( poly3 , len*2 ); puts("");
 	}
 	//for(int i=0;i<7;i++) bm_func2( o1 , poly1 , v1 );
 	//exit(-1);
@@ -128,23 +138,23 @@ bm_init(&bm_pointmul_tower);
 	for(unsigned i=0;i<TEST_RUN;i++) {
 		//byte_rand( poly1 , LEN );
 		//memcpy( poly2 , poly1 , LEN*sizeof(uint64_t) );
-		for(unsigned q=0;q<LEN;q++) { poly1[q] = rand(); poly1[q]<<=32; poly1[q] |= rand(); }
-		for(unsigned q=0;q<LEN;q++) { poly2[q] = rand(); poly2[q]<<=32; poly2[q] |= rand(); }
+		for(unsigned q=0;q<len;q++) { poly1[q] = rand(); poly1[q]<<=32; poly1[q] |= rand(); }
+		for(unsigned q=0;q<len;q++) { poly2[q] = rand(); poly2[q]<<=32; poly2[q] |= rand(); }
 
 BENCHMARK( bm1 , {
-		bm_func1( poly3 , poly2 , poly1 , LEN );
+		bm_func1( poly3 , poly2 , poly1 , len );
 } );
 		if(i >= REF_RUN) continue;
 BENCHMARK( bm2 , {
-		bm_func2( poly4 , poly2 , poly1 , LEN );
+		bm_func2( poly4 , poly2 , poly1 , len );
 } );
 
-		byte_xor( poly4 , poly3 , LEN*2 );
+		byte_xor( poly4 , poly3 , len*2 );
 #ifdef TEST_CONSISTENCY
-		if( ! byte_is_zero( poly4 , LEN*2 ) ) {
+		if( ! byte_is_zero( poly4 , len*2 ) ) {
 			printf("consistency fail: %d.\n", i);
-			printf("diff:"); byte_fdump(stdout,poly4,LEN*2); puts("");
-			printf("resl:"); byte_fdump(stdout,poly3,LEN*2); puts("");
+			printf("diff:"); byte_fdump(stdout,poly4,len*2); puts("");
+			printf("resl:"); byte_fdump(stdout,poly3,len*2); puts("");
 			printf("\n");
 			exit(-1);
 		}
@@ -154,7 +164,7 @@ BENCHMARK( bm2 , {
 	printf("check: %x\n", (unsigned)poly4[0] );
 	char msg[256];
 	bm_dump( msg , 256 , &bm1 );
-	printf("benchmark (%s) :\n%s\n\n", n_fn1 , msg );
+	printf("benchmark (%s) :\n%s\n", n_fn1 , msg );
 
 	bm_dump( msg , 256 , &bm2 );
 	printf("benchmark (%s) :\n%s\n\n", n_fn2 , msg );
