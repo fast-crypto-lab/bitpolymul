@@ -61,6 +61,10 @@ extern struct benchmark bm_bc;
 extern struct benchmark bm_butterfly;
 extern struct benchmark bm_pointmul;
 extern struct benchmark bm_pointmul_tower;
+
+extern struct benchmark bm_ich;
+extern struct benchmark bm_ibc;
+extern struct benchmark bm_ibutterfly;
 }
 #endif
 
@@ -68,7 +72,7 @@ extern struct benchmark bm_pointmul_tower;
 
 int main( int argc , char ** argv )
 {
-	unsigned char seed[32] = {0};
+	//unsigned char seed[32] = {0};
 
 	unsigned log2_len = LOG2(LEN);
 	if( log2_len == LOG2(LEN-1) ) log2_len++;
@@ -81,7 +85,7 @@ int main( int argc , char ** argv )
 	}
 	unsigned len = 1<<log2_len;
 
-	printf("Multiplication test:\ninput poly len: 2^%d x 64 bit. Benchmark in micro seonds.\n", log2_len );
+	printf("Multiplication test:\ninput poly len: 2^%d x 64 bit. Benchmark in micro seconds.\n", log2_len );
 
 #ifdef _DYNA_ALLOC_
         uint64_t * poly1 = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*len );
@@ -119,6 +123,9 @@ bm_init(&bm_bc);
 bm_init(&bm_butterfly);
 bm_init(&bm_pointmul);
 bm_init(&bm_pointmul_tower);
+bm_init(&bm_ibc);
+bm_init(&bm_ibutterfly);
+bm_init(&bm_ich);
 #endif
 
 	//byte_rand( poly1 , LEN );
@@ -170,17 +177,19 @@ BENCHMARK( bm2 , {
 	printf("benchmark (%s) :\n%s\n\n", n_fn2 , msg );
 
 #ifdef _PROFILE_
-	bm_dump( msg , 256 , &bm_ch ); printf("benchmark (ch ) :\n%s\n\n", msg );
-	bm_dump( msg , 256 , &bm_tr ); printf("benchmark (tr ) :\n%s\n\n", msg );
-	bm_dump( msg , 256 , &bm_tr2 ); printf("benchmark (tr2) :\n%s\n\n", msg );
+	bm_dump( msg , 256 , &bm_tr ); printf("benchmark (tr ) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_tr2 ); printf("benchmark (tr2) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_mul ); printf("benchmark (mul) :\n%s\n", msg );
 	bm_dump( msg , 256 , &bm_bm ); printf("benchmark (bm ) :\n%s\n\n", msg );
-	bm_dump( msg , 256 , &bm_mul ); printf("benchmark (mul) :\n%s\n\n", msg );
 
-	bm_dump( msg , 256 , &bm_bc ); printf("benchmark (bc) :\n%s\n\n", msg );
-	bm_dump( msg , 256 , &bm_butterfly ); printf("benchmark (butterfly) :\n%s\n\n", msg );
-	bm_dump( msg , 256 , &bm_pointmul ); printf("benchmark (pointmul) :\n%s\n\n", msg );
-
-	bm_dump( msg , 256 , &bm_pointmul_tower ); printf("benchmark (pointmul_tower) :\n%s\n\n", msg );
+	bm_dump( msg , 256 , &bm_ch ); printf("benchmark (ch ) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_bc ); printf("benchmark (bc) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_butterfly ); printf("benchmark (butterfly) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_pointmul ); printf("benchmark (pointmul) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_pointmul_tower ); printf("benchmark (pointmul_tower) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_ibutterfly ); printf("benchmark (ibutterfly) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_ibc ); printf("benchmark (ibc) :\n%s\n", msg );
+	bm_dump( msg , 256 , &bm_ich ); printf("benchmark (ich ) :\n%s\n\n", msg );
 #endif
 
 #ifdef _DYNA_ALLOC_

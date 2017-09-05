@@ -1,3 +1,22 @@
+/*
+Copyright (C) 2007 Ming-Shing Chen
+
+This file is part of BitPolyMul.
+
+BitPolyMul is free software: you can redistribute it and/or modify
+it under the terms of the Lesser GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+BitPolyMul is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _TRANSPOSE_H_
 #define _TRANSPOSE_H_
 
@@ -262,8 +281,9 @@ void transpose_16x32( uint8_t * r , const uint8_t * a )
         tr_ref_16x32( r , a );
 }
 
-
+#if 0
 static uint64_t gath_32x16[4] __attribute__((aligned(32))) = {0, 8 , 32 , 40};
+#endif
 
 static inline
 void transpose_32x16( uint8_t * r , const uint8_t * a )
