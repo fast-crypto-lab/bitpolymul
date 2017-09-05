@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007 Ming-Shing Chen
+Copyright (C) 2017 Ming-Shing Chen
 
 This file is part of BitPolyMul.
 
