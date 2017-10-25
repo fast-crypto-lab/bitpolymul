@@ -17,27 +17,28 @@ You should have received a copy of the GNU Lesser General Public License
 along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _BITPOLYMUL_H_
-#define _BITPOLYMUL_H_
 
+#ifndef _TRUNC_BTFY_TAB_H_
+#define _TRUNC_BTFY_TAB_H_
 
-#include <stdint.h>
-
-#define bitpolymul bitpolymul_2
+#include "stdint.h"
 
 #ifdef  __cplusplus
 extern  "C" {
 #endif
 
+extern uint64_t beta_mul_80 [];
 
-void bitpolymul_simple( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t i_beta_mul_80 [];
 
-void bitpolymul_128( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t beta_mul_80_m4r [];
 
-void bitpolymul_256( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t i_beta_mul_80_m4r [];
 
 
-void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t beta_mul_80_m8r [];
+
+extern uint64_t i_beta_mul_80_m8r [];
 
 
 #ifdef  __cplusplus

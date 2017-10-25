@@ -64,7 +64,7 @@ void butterfly( __m128i * poly , unsigned unit , unsigned ska )
 #ifdef _SIMPLE_TOWER_
 	bitmatrix_prod_64x128_4R_sse( ska_iso , gfTowerto2128_4R , ska );
 #else
-	bitmatrix_prod_64x128_4R_sse( ska_iso , gfCantorto2128_4R , ska );
+	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
 #endif
 	//__m128i a = _mm_load_si128( (__m128i*) ska_iso );
 
@@ -86,7 +86,7 @@ void i_butterfly( __m128i * poly , unsigned unit , unsigned ska )
 #ifdef _SIMPLE_TOWER_
 	bitmatrix_prod_64x128_4R_sse( ska_iso , gfTowerto2128_4R , ska );
 #else
-	bitmatrix_prod_64x128_4R_sse( ska_iso , gfCantorto2128_4R , ska );
+	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
 #endif
 	//__m128i a = _mm_load_si128( (__m128i*) ska_iso );
 

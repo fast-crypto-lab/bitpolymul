@@ -159,6 +159,125 @@ bm_stop(&bm_ibc);
 
 
 
+/////////////////////////////////////////////////////////////////////////////////
+
+
+#include "btfy.h"
+
+void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned _n_64 )
+{
+	if( 0 == _n_64 ) return;
+	unsigned n_64 = 0;
+	if( 1 == _n_64 ) n_64 = _n_64;
+	else {
+		unsigned log_2_n64 = LOG2(_n_64);
+		unsigned log_2_n64_1 = LOG2(_n_64-1);
+		if( log_2_n64 == log_2_n64_1 )log_2_n64 += 1;
+		n_64 = 1<<log_2_n64;
+	}
+
+	if( 4 > n_64 ) n_64 = 4;
+
+	uint64_t * a_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64 );
+	if( NULL == a_bc ) { printf("alloc fail.\n"); exit(-1); }
+	uint64_t * b_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64 );
+	if( NULL == b_bc ) { printf("alloc fail.\n"); exit(-1); }
+
+#ifdef _PROFILE_
+bm_start(&bm_bc);
+#endif
+	memcpy( a_bc , a , sizeof(uint64_t)*_n_64 );
+	for(unsigned i=_n_64;i<n_64;i++) a_bc[i] = 0;
+	//bc_to_lch_2( a_bc , n_64 );
+	bc_to_lch_2_unit256( a_bc , n_64 );
+	//for(unsigned i=n_64;i<n_64*2;i++) a_bc[i] = 0;
+
+	memcpy( b_bc , b , sizeof(uint64_t)*_n_64 );
+	for(unsigned i=_n_64;i<n_64;i++) b_bc[i] = 0;
+	//bc_to_lch_2( b_bc , n_64 );
+	bc_to_lch_2_unit256( b_bc , n_64 );
+	//for(unsigned i=n_64;i<n_64*2;i++) b_bc[i] = 0;
+
+#ifdef _PROFILE_
+bm_stop(&bm_bc);
+#endif
+
+	unsigned n_terms = n_64;
+	unsigned log_n = __builtin_ctz( n_terms );
+	uint64_t * a_fx = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*n_terms );
+	if( NULL == a_fx ) { printf("alloc fail.\n"); exit(-1); }
+	uint64_t * b_fx = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*2*n_terms );
+	if( NULL == b_fx ) { printf("alloc fail.\n"); exit(-1); }
+
+#ifdef _PROFILE_
+bm_start(&bm_tr);
+#endif
+	encode_half_inp( a_fx , a_bc , n_terms );
+	//encode( a_fx , a_bc , n_terms );
+
+	encode_half_inp( b_fx , b_bc , n_terms );
+	//encode( b_fx , b_bc , n_terms );
+
+#ifdef _PROFILE_
+bm_stop(&bm_tr);
+#endif
+#ifdef _PROFILE_
+bm_start(&bm_butterfly);
+#endif
+	btfy( b_fx , n_terms , 80+log_n+1 );
+	btfy( a_fx , n_terms , 80+log_n+1 );
+#ifdef _PROFILE_
+bm_stop(&bm_butterfly);
+#endif
+
+
+#ifdef _PROFILE_
+bm_start(&bm_pointmul);
+#endif
+	for(unsigned i=0;i<n_terms;i++) gf2ext128_mul_sse( (uint8_t *)&a_fx[i*2] , (uint8_t *)&a_fx[i*2] , (uint8_t*)& b_fx[i*2] );
+#ifdef _PROFILE_
+bm_stop(&bm_pointmul);
+#endif
+
+#ifdef _PROFILE_
+bm_start(&bm_ibutterfly);
+#endif
+	i_btfy( a_fx , n_terms , 80+log_n+1 );
+#ifdef _PROFILE_
+bm_stop(&bm_ibutterfly);
+#endif
+
+#ifdef _PROFILE_
+bm_start(&bm_tr2);
+#endif
+	decode( b_fx , a_fx , n_terms );
+#ifdef _PROFILE_
+bm_stop(&bm_tr2);
+#endif
+
+#ifdef _PROFILE_
+bm_start(&bm_ibc);
+#endif
+	//bc_to_mono_2( b_fx , 2*n_64 );
+	bc_to_mono_2_unit256( b_fx , 2*n_64 );
+#ifdef _PROFILE_
+bm_stop(&bm_ibc);
+#endif
+
+	for(unsigned i=0;i<(2*_n_64);i++) {
+		c[i] = b_fx[i];
+	}
+
+	free(a_bc);
+	free(b_bc);
+	free(a_fx);
+	free(b_fx);
+
+}
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////
 

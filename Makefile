@@ -10,7 +10,7 @@ LIBPATH= -L/usr/local/lib -L/opt/local/lib -L/usr/lib #-L../gf2-dev/
 LIBS=    #-lm -lcrypto -lgf2x
 
 
-OBJ= bc.o bitpolymul.o gf2128_tower_iso.o butterfly_net.o gf16.o ska.o gf2256_tower_iso.o gf2128_cantor_iso.o
+OBJ= bc.o bitpolymul.o gf2128_tower_iso.o butterfly_net.o gf16.o ska.o gf2256_tower_iso.o gf2128_cantor_iso.o btfy.o bc_tab.o trunc_btfy_tab.o
 EXE= bitpolymul-test #bc-test
 
 

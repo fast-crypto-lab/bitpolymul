@@ -46,4 +46,32 @@ static inline
 void byte_dump( const uint64_t *v, unsigned _num_byte ) { byte_fdump(stdout,v,_num_byte); }
 
 
+
+#include <immintrin.h>
+
+static inline
+void xmm_rand( __m128i * vec , unsigned n ) { byte_rand((uint64_t*)vec,n*2); }
+
+static inline
+uint64_t xmm_is_zero( const __m128i * vec , unsigned n ) {
+	__m128i r=_mm_setzero_si128();
+	for(unsigned i=0;i<n;i++) r |= vec[i];
+	return 0xffff==_mm_movemask_epi8( _mm_cmpeq_epi8(r,_mm_setzero_si128()) );
+}
+
+static inline
+void xmm_xor( __m128i * v1 , const __m128i * v2 , unsigned n ) { for(unsigned i=0;i<n;i++) v1[i]^= v2[i]; }
+
+static inline
+void xmm_fdump( FILE * fp, const __m128i *v, unsigned n ) {
+	fprintf(fp,"[%2d][",n);
+	const uint64_t *v64 = (const uint64_t*)v;
+	for(unsigned i=0;i<n;i++) { fprintf(fp,"0x%02lx-%02lx, ",v64[i*2+1],v64[i*2]); if(7==(i%8)) fprintf(fp,"|");}
+	fprintf(fp,"]");
+}
+
+static inline
+void xmm_dump( const __m128i *v, unsigned n ) { xmm_fdump(stdout,v,n); }
+
+
 #endif

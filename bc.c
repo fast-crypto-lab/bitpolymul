@@ -21,6 +21,7 @@ along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
+
 static inline
 unsigned get_num_blocks( unsigned poly_len , unsigned blk_size ) {
 	return poly_len/blk_size;
@@ -606,18 +607,12 @@ void i_represent_in_si_256( __m256i * poly , unsigned n_terms , unsigned blk_siz
 void _bc_to_mono_256( __m256i * poly , unsigned n_terms , unsigned blk_size )
 {
 
-//printf("ibc: %d/%d\n", n_terms , blk_size );
-
 	unsigned num_blocks = get_num_blocks( n_terms , blk_size );
 	if( 2 >= num_blocks ) return;
 	unsigned degree_in_blocks = num_blocks - 1;
-
-//printf("deg: %d\n", degree_in_blocks);
 	unsigned si = get_max_si( degree_in_blocks );
-//printf("si: %d\n",si);
 
 	unsigned new_blk_size = deg_si(si)*blk_size;
-//printf("new blksize: %d\n", new_blk_size);
 	for(unsigned i=0;i<n_terms;i+= new_blk_size ) {
 		_bc_to_mono_256( poly + i , new_blk_size , blk_size );
 	}
@@ -635,4 +630,282 @@ void bc_to_mono_256( bc_sto_t * poly , unsigned n_terms )
 
 
 
+
+///////////////////////////////////////////////
+
+#define NDEBUG
+#include "assert.h"
+
+
+
+//#include "byte_inline_func.h"
+
+static
+__m256i _mm256_alignr_255bit_zerohigh( __m256i zerohigh , __m256i low )
+{
+	__m256i l_shr_15 = _mm256_srli_epi16( low , 15 );
+	__m256i r_1 = _mm256_permute2x128_si256( l_shr_15 , zerohigh , 0x21 );
+	return _mm256_srli_si256( r_1 , 14 );
+}
+
+static
+__m256i _mm256_alignr_254bit_zerohigh( __m256i zerohigh , __m256i low )
+{
+	__m256i l_shr_14 = _mm256_srli_epi16( low , 14 );
+	__m256i r_2 = _mm256_permute2x128_si256( l_shr_14 , zerohigh , 0x21 );
+	return _mm256_srli_si256( r_2 , 14 );
+}
+
+static
+__m256i _mm256_alignr_252bit_zerohigh( __m256i zerohigh , __m256i low )
+{
+	__m256i l_shr_12 = _mm256_srli_epi16( low , 12 );
+	__m256i r_4 = _mm256_permute2x128_si256( l_shr_12 , zerohigh , 0x21 );
+	return _mm256_srli_si256( r_4 , 14 );
+}
+
+static
+__m256i _mm256_alignr_255bit( __m256i high , __m256i low )
+{
+	__m256i l_shr_15 = _mm256_srli_epi16( low , 15 );
+	__m256i h_shr_15 = _mm256_srli_epi16( high , 15 );
+	__m256i h_shl_1 = _mm256_slli_epi16( high , 1 );
+	__m256i r = h_shl_1^_mm256_slli_si256( h_shr_15 , 2 );
+
+	__m256i r_1 = _mm256_permute2x128_si256( l_shr_15 , h_shr_15 , 0x21 );
+	r ^= _mm256_srli_si256( r_1 , 14 );
+	return r;
+}
+
+static
+__m256i _mm256_alignr_254bit( __m256i high , __m256i low )
+{
+	__m256i l_shr_14 = _mm256_srli_epi16( low , 14 );
+	__m256i h_shr_14 = _mm256_srli_epi16( high , 14 );
+	__m256i h_shl_2 = _mm256_slli_epi16( high , 2 );
+	__m256i r = h_shl_2^_mm256_slli_si256( h_shr_14 , 2 );
+
+	__m256i r_2 = _mm256_permute2x128_si256( l_shr_14 , h_shr_14 , 0x21 );
+	r ^= _mm256_srli_si256( r_2 , 14 );
+	return r;
+}
+
+static
+__m256i _mm256_alignr_252bit( __m256i high , __m256i low )
+{
+	__m256i l_shr_12 = _mm256_srli_epi16( low , 12 );
+	__m256i h_shr_12 = _mm256_srli_epi16( high , 12 );
+	__m256i h_shl_4 = _mm256_slli_epi16( high , 4 );
+	__m256i r = h_shl_4^_mm256_slli_si256( h_shr_12 , 2 );
+
+	__m256i r_4 = _mm256_permute2x128_si256( l_shr_12 , h_shr_12 , 0x21 );
+	r ^= _mm256_srli_si256( r_4 , 14 );
+	return r;
+}
+
+static
+__m256i _mm256_alignr_31byte( __m256i high , __m256i low )
+{
+	__m256i l0 = _mm256_permute2x128_si256( low , high , 0x21 );
+	return _mm256_alignr_epi8( high , l0 , 15 );
+}
+
+static
+__m256i _mm256_alignr_30byte( __m256i high , __m256i low )
+{
+	__m256i l0 = _mm256_permute2x128_si256( low , high , 0x21 );
+	return _mm256_alignr_epi8( high , l0 , 14 );
+}
+
+static
+__m256i _mm256_alignr_28byte( __m256i high , __m256i low )
+{
+	__m256i l0 = _mm256_permute2x128_si256( low , high , 0x21 );
+	return _mm256_alignr_epi8( high , l0 , 12 );
+}
+
+static
+__m256i _mm256_alignr_24byte( __m256i high , __m256i low )
+{
+	__m256i l0 = _mm256_permute2x128_si256( low , high , 0x21 );
+	return _mm256_alignr_epi8( high , l0 , 8 );
+}
+
+static
+__m256i _mm256_alignr_16byte( __m256i high , __m256i low )
+{
+	return _mm256_permute2x128_si256( low , high , 0x21 );
+}
+
+static
+__m256i (*_sh_op[8]) (__m256i h, __m256i l) = {
+	_mm256_alignr_255bit, _mm256_alignr_254bit, _mm256_alignr_252bit, _mm256_alignr_31byte, _mm256_alignr_30byte, _mm256_alignr_28byte, _mm256_alignr_24byte, _mm256_alignr_16byte
+};
+
+static
+__m256i (*_sh_op_zerohigh[8]) (__m256i h, __m256i l) = {
+	_mm256_alignr_255bit_zerohigh , _mm256_alignr_254bit_zerohigh , _mm256_alignr_252bit_zerohigh , _mm256_alignr_31byte, _mm256_alignr_30byte, _mm256_alignr_28byte, _mm256_alignr_24byte, _mm256_alignr_16byte
+};
+
+
+static inline
+void __sh_xor_down( __m256i* poly256 , unsigned unit , unsigned _op , __m256i zero )
+{
+	unsigned unit_2 = unit>>1;
+	poly256[unit_2] ^= _sh_op_zerohigh[_op](zero,poly256[unit-1]);
+	for(unsigned i=0;i<unit_2-1;i++) {
+		poly256[unit_2-1-i] ^= _sh_op[_op]( poly256[unit-1-i] , poly256[unit-2-i] );
+	}
+	poly256[0] ^= _sh_op[_op](poly256[unit_2],zero);
+}
+
+
+static inline
+void __xor_down_256_2( __m256i * poly , unsigned len , unsigned l_st ){
+	for( int i=len-1;i>=0;i--) poly[l_st+i] ^= poly[len+i];
+}
+
+static
+void varsub_x256( __m256i* poly256 , unsigned n_256 )
+{
+	if( 1 >= n_256 ) return;
+	unsigned log_n = __builtin_ctz( n_256 );
+	__m256i zero = _mm256_setzero_si256();
+
+	while( log_n > 8 ) {
+		unsigned unit = 1<<log_n;
+		unsigned num = n_256/unit;
+		unsigned unit_2 = unit>>1;
+		for(unsigned j=0;j<num;j++) __xor_down_256_2( poly256+j*unit , unit_2 , (1<<(log_n-9)) );
+		log_n--;
+	}
+
+	for(unsigned i=log_n; i>0 ; i--) {
+		unsigned unit = (1<<i);
+		unsigned num = n_256 / unit;
+		for(unsigned j=0;j<num;j++) __sh_xor_down( poly256 + j*unit , unit , i-1 , zero );
+	}
+
+}
+
+
+static inline
+void __sh_xor_up( __m256i* poly256 , unsigned unit , unsigned _op , __m256i zero )
+{
+	unsigned unit_2 = unit>>1;
+	poly256[0] ^= _sh_op[_op](poly256[unit_2],zero);
+	for(unsigned i=0;i<unit_2-1;i++) {
+		poly256[i+1] ^= _sh_op[_op]( poly256[unit_2+i+1] , poly256[unit_2+i] );
+	}
+	poly256[unit_2] ^= _sh_op_zerohigh[_op](zero,poly256[unit-1]);
+}
+
+
+static inline
+void __xor_up_256_2( __m256i * poly , unsigned len , unsigned l_st ){
+	for( unsigned i=0;i<len;i++) poly[l_st+i] ^= poly[len+i];
+}
+
+static
+void i_varsub_x256( __m256i* poly256 , unsigned n_256 )
+{
+	if( 1 >= n_256 ) return;
+	unsigned log_n = __builtin_ctz( n_256 );
+	__m256i zero = _mm256_setzero_si256();
+
+	unsigned _log_n = (log_n>8)? 8 : log_n;
+	for(unsigned i=1; i<=_log_n ; i++) {
+		unsigned unit = (1<<i);
+		unsigned num = n_256 / unit;
+		for(unsigned j=0;j<num;j++) __sh_xor_up( poly256 + j*unit , unit , i-1 , zero );
+	}
+
+	for(unsigned i=9;i<=log_n ; i++ ) {
+		unsigned unit = 1<<i;
+		unsigned num = n_256/unit;
+		unsigned unit_2 = unit>>1;
+		for(unsigned j=0;j<num;j++) __xor_up_256_2( poly256+j*unit , unit_2 , (1<<(i-9)) );
+	}
+}
+
+
+void bc_to_lch_2_unit256( bc_sto_t * poly , unsigned n_terms )
+{
+	assert( 0 == ( n_terms&(n_terms-1) ) );
+	assert( 4 <= n_terms );
+
+	__m256i * poly256 = (__m256i*) poly;
+	unsigned n_256 = n_terms>>2;
+
+	varsub_x256( poly256 , n_256 );
+	_bc_to_lch_256( poly256 , n_256 , 1 );
+}
+
+
+void bc_to_mono_2_unit256( bc_sto_t * poly , unsigned n_terms )
+{
+	assert( 0 == ( n_terms&(n_terms-1) ) );
+	assert( 4 <= n_terms );
+
+	__m256i * poly256 = (__m256i*) poly;
+	unsigned n_256 = n_terms>>2;
+
+	_bc_to_mono_256( poly256 , n_256 , 1 );
+	i_varsub_x256( poly256 , n_256 );
+}
+
+
+#include "bitmat_prod.h"
+#include "bc_tab.h"
+
+#include "gfext_aesni.h"
+
+void bc_to_lch_2( bc_sto_t * poly , unsigned n_terms )
+{
+	assert( 0 == ( n_terms&(n_terms-1) ) );
+	if( 1 == n_terms ) {
+		uint64_t tt[2] __attribute__((aligned(32)));
+		bitmatrix_prod_64x128_4R_sse( (uint8_t *)tt , bc_tab_from_mono_128_m4r , poly[0] );
+		poly[0] = tt[0];
+		return;
+	}
+	if( 2 == n_terms ) {
+		bitmatrix_prod_128x128_4R_sse( (uint8_t *)poly , bc_tab_from_mono_128_m4r , (const uint8_t *)poly );
+		return;
+	}
+
+	bc_to_lch_2_unit256( poly , n_terms );
+
+	unsigned n_256 = n_terms>>2;
+	__m256i * poly256 = (__m256i*) poly;
+	for(unsigned i=0;i<n_256;i++) {
+		poly256[i] = div_s7( poly256[i] );
+		poly256[i] = bitmat_prod_128x128_x2_4R_sse( bc_tab_from_mono_128_m4r , poly256[i] );
+	}
+
+}
+
+
+void bc_to_mono_2( bc_sto_t * poly , unsigned n_terms )
+{
+	assert( 0 == ( n_terms&(n_terms-1) ) );
+	if( 1 == n_terms ) {
+		uint64_t tt[2] __attribute__((aligned(32)));
+		bitmatrix_prod_64x128_4R_sse( (uint8_t *)tt , bc_tab_to_mono_128_m4r , poly[0] );
+		poly[0] = tt[0];
+		return;
+	}
+	if( 2 == n_terms ) {
+		bitmatrix_prod_128x128_4R_sse( (uint8_t *)poly , bc_tab_to_mono_128_m4r , (const uint8_t *)poly );
+		return;
+	}
+	unsigned n_256 = n_terms>>2;
+	__m256i * poly256 = (__m256i*) poly;
+	for(unsigned i=0;i<n_256;i++) {
+		poly256[i] = bitmat_prod_128x128_x2_4R_sse( bc_tab_to_mono_128_m4r , poly256[i] );
+		poly256[i] = exp_s7( poly256[i] );
+	}
+
+	bc_to_mono_2_unit256( poly , n_terms );
+}
 

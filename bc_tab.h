@@ -17,32 +17,40 @@ You should have received a copy of the GNU Lesser General Public License
 along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _BITPOLYMUL_H_
-#define _BITPOLYMUL_H_
 
+#ifndef _BC_TAB_H_
+#define _BC_TAB_H_
 
 #include <stdint.h>
 
-#define bitpolymul bitpolymul_2
+
 
 #ifdef  __cplusplus
 extern  "C" {
 #endif
 
 
-void bitpolymul_simple( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t bc_tab_from_mono_128[];
 
-void bitpolymul_128( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t bc_tab_from_mono_256_h128[];
 
-void bitpolymul_256( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t bc_tab_to_mono_128[];
 
+extern uint64_t bc_tab_to_mono_256_h128[];
 
-void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned n_64 );
+extern uint64_t bc_tab_from_mono_128_m4r[];
+
+extern uint64_t bc_tab_from_mono_256_h128_m4r[];
+
+extern uint64_t bc_tab_to_mono_128_m4r[];
+
+extern uint64_t bc_tab_to_mono_256_h128_m4r[];
 
 
 #ifdef  __cplusplus
 }
 #endif
+
 
 
 #endif

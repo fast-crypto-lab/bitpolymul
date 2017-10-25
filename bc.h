@@ -48,6 +48,18 @@ void bc_to_lch_256( bc_sto_t * poly , unsigned n_terms );
 void bc_to_mono_256( bc_sto_t * poly , unsigned n_terms );
 
 
+
+void bc_to_lch_2( bc_sto_t * poly , unsigned n_terms );
+
+void bc_to_mono_2( bc_sto_t * poly , unsigned n_terms );
+
+
+void bc_to_lch_2_unit256( bc_sto_t * poly , unsigned n_terms );
+
+void bc_to_mono_2_unit256( bc_sto_t * poly , unsigned n_terms );
+
+
+
 #ifdef  __cplusplus
 }
 #endif

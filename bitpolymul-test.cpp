@@ -29,7 +29,7 @@ void polymul_gf2x( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 #define TOSTRING(x) STRINGIFY(x)
 
 //#define bm_func1 bitpolymul_simple
-#define bm_func1 bitpolymul_256
+#define bm_func1 bitpolymul_2
 //#define bm_func1 bitpolymul_128
 //#define bm_func1 bitpolymul
 #define n_fn1 "fn:" TOSTRING(bm_func1) "()"
@@ -44,7 +44,7 @@ void polymul_gf2x( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 
 //#define _EXIT_WHILE_FAIL_
 
-#define LEN 1024*64
+#define LEN 1024*32
 
 #define _DYNA_ALLOC_
 
@@ -130,8 +130,10 @@ bm_init(&bm_ich);
 
 	//byte_rand( poly1 , LEN );
 	for(unsigned i=0;i<len;i++) poly1[i] = i;
+	for(unsigned i=0;i<len;i++) poly1[i] = 0;
+	poly1[0] = 3;
 	memset( poly2 , 0 , sizeof(uint64_t)*len );
-	poly2[0] = 1;
+	poly2[0] = 2;
 	//memcpy( poly2 , poly1 , LEN*sizeof(uint64_t) );
 	bm_func1( poly3 , poly1 , poly2 , len );
 	if( 32 >= len ) {

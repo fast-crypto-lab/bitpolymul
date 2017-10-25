@@ -96,6 +96,58 @@ void gf2ext128_mul_sse( uint8_t * c , const uint8_t * a , const uint8_t * b )
 }
 
 
+static inline
+__m128i _gf2ext128_mul_sse( __m128i a0 , __m128i b0 )
+{
+	__m128i c0,c128;
+	_MUL_128_KARATSUBA( c0,c128, a0,b0 );
+	__m128i c3 = _gf2ext128_reduce_sse( c0 , c128 );
+	return c3;
+}
+
+
+
+
+// s7 = x^64 + x^32 + x16 + x8 + x4 + x2 + x
+
+
+static const uint64_t _s7[2] __attribute__((aligned(32)))  = {0x100010116ULL,0x1ULL};
+
+static inline
+__m256i div_s7( __m256i a )
+{
+	__m128i r_s7 = _mm_load_si128( (__m128i const*)_s7 );
+	__m128i a1 = _mm256_extracti128_si256( a, 1 );
+	__m128i a0 = _mm256_castsi256_si128( a );
+
+	__m128i a1h_s7 = _mm_clmulepi64_si128( a1 , r_s7 , 1 );
+	a1 ^= _mm_srli_si128( a1^a1h_s7 , 8 );
+	a0 ^= _mm_slli_si128( a1h_s7 , 8 );
+
+	a0 ^= _mm_slli_si128( a1 , 8 );
+	a0 ^= _mm_clmulepi64_si128( a1 , r_s7 , 0 );
+
+	__m256i r = _mm256_castsi128_si256( a0 );
+	return _mm256_inserti128_si256( r , a1 , 1 );
+}
+
+
+static inline
+__m256i exp_s7( __m256i a )
+{
+	__m128i r_s7 = _mm_load_si128( (__m128i const*)_s7 );
+	__m128i a1 = _mm256_extracti128_si256( a, 1 );
+	__m128i a0 = _mm256_castsi256_si128( a );
+
+	a0 ^= _mm_clmulepi64_si128( a1 , r_s7 , 0 );
+	a0 ^= _mm_slli_si128( a1 , 8 );
+	__m128i a1h_s7 = _mm_clmulepi64_si128( a1 , r_s7 , 1 );
+	a0 ^= _mm_slli_si128( a1h_s7 , 8 );
+	a1 ^= _mm_srli_si128( a1^a1h_s7 , 8 );
+
+	__m256i r = _mm256_castsi128_si256( a0 );
+	return _mm256_inserti128_si256( r , a1 , 1 );
+}
 
 
 #endif
