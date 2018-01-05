@@ -44,7 +44,7 @@ along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 
 
 static inline
-void butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+__m128i butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
 	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
@@ -56,12 +56,12 @@ void butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a 
 		poly[i] ^= _gf2ext128_mul_sse( poly[unit_2+i] , a );
 		poly[unit_2+i] ^= poly[i];
 	}
-
+	return a;
 }
 
 
 static inline
-void i_butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+__m128i i_butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
 	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
@@ -73,14 +73,14 @@ void i_butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_
 		poly[unit_2+i] ^= poly[i];
 		poly[i] ^= _gf2ext128_mul_sse( poly[unit_2+i] , a );
 	}
-
+	return a;
 }
 
 
 
 
 static inline
-void butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+__m128i butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
 	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
@@ -92,12 +92,12 @@ void butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i ext
 		poly[i] ^= _gf2ext128_mul_2x1_avx2( poly[unit_2+i] , a );
 		poly[unit_2+i] ^= poly[i];
 	}
-
+	return a;
 }
 
 
 static inline
-void i_butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+__m128i i_butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
 {
 	uint8_t ska_iso[16] __attribute__((aligned(32)));
 	bitmatrix_prod_64x128_8R_sse( ska_iso , gfCantorto2128_8R , ska );
@@ -109,12 +109,11 @@ void i_butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i e
 		poly[unit_2+i] ^= poly[i];
 		poly[i] ^= _gf2ext128_mul_2x1_avx2( poly[unit_2+i] , a );
 	}
-
+	return a;
 }
 
 
 /////////////////////////////////////////////////////
-
 
 
 void btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
@@ -135,8 +134,11 @@ void btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned k = i-1;
 		__m128i extra_a = (scalar_a - k > 0 ) ? _mm_load_si128( (__m128i*) (&gfCantorto2128[2*(scalar_a-k -1)]) ) : _mm_setzero_si128();
 
+		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
-			butterfly_avx2( poly256 + j*unit , unit , j<<1 , extra_a );
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = butterfly_avx2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 	__m128i * poly128 = (__m128i*) &fx[0];
@@ -147,8 +149,11 @@ void btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned k = i-1;
 		__m128i extra_a = (scalar_a - k > 0 ) ? _mm_load_si128( (__m128i*) (&gfCantorto2128[2*(scalar_a-k -1)]) ) : _mm_setzero_si128();
 
+		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
-			butterfly( poly128 + j*unit , unit , j<<1 , extra_a );
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = butterfly( poly128 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 }
@@ -171,8 +176,11 @@ void i_btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned k = i-1;
 		__m128i extra_a = (scalar_a - k > 0 ) ? _mm_load_si128( (__m128i*) (&gfCantorto2128[2*(scalar_a-k -1)]) ) : _mm_setzero_si128();
 
+		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
-			i_butterfly( poly128 + j*unit , unit , j<<1 , extra_a );
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = i_butterfly( poly128 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 
@@ -184,8 +192,11 @@ void i_btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned k = i-1;
 		__m128i extra_a = (scalar_a - k > 0 ) ? _mm_load_si128( (__m128i*) (&gfCantorto2128[2*(scalar_a-k -1)]) ) : _mm_setzero_si128();
 
+		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
-			i_butterfly_avx2( poly256 + j*unit , unit , j<<1 , extra_a );
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = i_butterfly_avx2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 
