@@ -163,6 +163,7 @@ bm_stop(&bm_ibc);
 
 
 #include "btfy.h"
+#include "encode.h"
 
 void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsigned _n_64 )
 {
