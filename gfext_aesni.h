@@ -76,9 +76,9 @@ do {\
   c1 = _mm_clmulepi64_si128( a0,b0 , 0x11 ); \
   __m128i _tt0 = a0^_mm_srli_si128(a0,8); \
   __m128i _tt1 = b0^_mm_srli_si128(b0,8); \
-  _tt0 = _mm_clmulepi64_si128( _tt0, _tt1 , 0 )^c0^c1; \
-  c0 ^= _mm_slli_si128( _tt0 , 8 ); \
-  c1 ^= _mm_srli_si128( _tt0 , 8 ); \
+  __m128i _tt2 = _mm_clmulepi64_si128( _tt0, _tt1 , 0 )^c0^c1; \
+  c0 ^= _mm_slli_si128( _tt2 , 8 ); \
+  c1 ^= _mm_srli_si128( _tt2 , 8 ); \
 } while(0)
 
 
@@ -106,6 +106,27 @@ __m128i _gf2ext128_mul_sse( __m128i a0 , __m128i b0 )
 }
 
 
+static inline
+__m256i _gf2ext128_mul_2x1_avx2( __m256i a0a1 , __m128i b0 )
+{
+	__m128i a0 = _mm256_castsi256_si128(a0a1);
+	__m128i a1 = _mm256_extracti128_si256(a0a1,1);
+
+	__m128i c0,c128;
+	__m128i d0,d128;
+	_MUL_128_KARATSUBA( c0,c128, a0,b0 );
+	_MUL_128_KARATSUBA( d0,d128, a1,b0 );
+	__m128i c3 = _gf2ext128_reduce_sse( c0 , c128 );
+	__m128i d3 = _gf2ext128_reduce_sse( d0 , d128 );
+
+	__m256i r = _mm256_castsi128_si256(c3);
+
+	return _mm256_inserti128_si256(r,d3,1);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////
 
 
 // s7 = x^64 + x^32 + x16 + x8 + x4 + x2 + x

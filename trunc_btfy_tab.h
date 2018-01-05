@@ -31,14 +31,16 @@ extern uint64_t beta_mul_80 [];
 
 extern uint64_t i_beta_mul_80 [];
 
-extern uint64_t beta_mul_80_m4r [];
-
-extern uint64_t i_beta_mul_80_m4r [];
 
 
-extern uint64_t beta_mul_80_m8r [];
+extern uint64_t beta_mul_80_bm4r [];
 
-extern uint64_t i_beta_mul_80_m8r [];
+extern uint64_t i_beta_mul_80_bm4r [];
+
+extern uint64_t beta_mul_80_bm4r_ext_8 [];
+
+extern uint64_t i_beta_mul_80_bm4r_ext_8 [];
+
 
 
 #ifdef  __cplusplus

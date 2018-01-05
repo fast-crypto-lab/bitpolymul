@@ -190,4 +190,135 @@ void bitmatrix_prod_128x128_8R_sse( uint8_t * r , const uint64_t * mat4R , const
 
 
 
+#include "transpose.h"
+
+
+static inline
+void bitmatrix_prod_128x128_4R_b32_avx2( uint8_t * r32 , const uint64_t * matB4R , const uint8_t *a32 )
+{
+	uint8_t t32[32*16] __attribute__((aligned(32)));
+	tr_16x16_b2_avx2( t32 , a32 );
+
+	__m256i *r = (__m256i*) r32;
+	const __m256i * tab = (const __m256i*) & matB4R[0];
+	__m256i _0xf = _mm256_set1_epi8(0xf);
+
+	for(unsigned i=0;i<16;i++) r[i] = _mm256_setzero_si256();
+
+for(unsigned k=0;k<16;k+=8) {
+	for(unsigned i=0;i<16;i++) {
+		__m256i temp = _mm256_load_si256( (__m256i*)(t32 + i*32) );
+		__m256i low1_low0 = temp&_0xf;
+		__m256i high1_high0 = _mm256_srli_epi16( _mm256_andnot_si256( _0xf ,  temp ) , 4 );
+
+		__m256i high1_low0 = _mm256_permute2x128_si256( low1_low0 , high1_high0 , 0x30 );
+		__m256i low1_high0 = _mm256_permute2x128_si256( low1_low0 , high1_high0 , 0x12);
+
+		for(unsigned j=k;j<k+8;j++) {
+			//__m256i _tab = _mm256_load_si256( &tab[i*16+j] );
+			__m256i _tab = tab[i*16+j];
+			__m256i tab_r = _mm256_permute4x64_epi64( _tab , 0x4e );
+			r[j] ^= _mm256_shuffle_epi8( _tab , high1_low0 ) ^ _mm256_shuffle_epi8( tab_r , low1_high0 );
+		}
+	}
+}
+
+	tr_16x16_b2_avx2( r32 , r32 );
+}
+
+
+
+
+static inline
+void bitmatrix_prod_128x128_4R_b32_opt_avx2( uint8_t * r32 , const uint64_t * matB4R , const uint8_t *a32 )
+{
+	uint8_t t32[32*16] __attribute__((aligned(32)));
+	tr_16x16_b2_avx2( t32 , a32 );
+
+	__m256i *r = (__m256i*) r32;
+	const __m256i * tab = (const __m256i*) & matB4R[0];
+	__m256i _0xf = _mm256_set1_epi8(0xf);
+
+	for(unsigned i=0;i<8;i++) r[i] = _mm256_setzero_si256();
+	for(unsigned i=0;i<16;i++) {
+		__m256i temp = _mm256_load_si256( (__m256i*)(t32 + i*32) );
+		__m256i low1_low0 = temp&_0xf;
+		__m256i high1_high0 = _mm256_srli_epi16( _mm256_andnot_si256( _0xf ,  temp ) , 4 );
+
+		for(unsigned j=0;j<8;j++) {
+			__m256i tab_0 = tab[i*16+(j<<1)];
+			__m256i tab_1 = tab[i*16+(j<<1)+1];
+			r[j] ^= _mm256_shuffle_epi8( tab_0 , low1_low0 ) ^ _mm256_shuffle_epi8( tab_1 , high1_high0 );
+		}
+	}
+	tab += 16*16;
+	r += 8;
+	for(unsigned i=0;i<8;i++) r[i] = _mm256_setzero_si256();
+	for(unsigned i=0;i<16;i++) {
+		__m256i temp = _mm256_load_si256( (__m256i*)(t32 + i*32) );
+		__m256i low1_low0 = temp&_0xf;
+		__m256i high1_high0 = _mm256_srli_epi16( _mm256_andnot_si256( _0xf ,  temp ) , 4 );
+
+		for(unsigned j=0;j<8;j++) {
+			__m256i tab_0 = tab[i*16+(j<<1)];
+			__m256i tab_1 = tab[i*16+(j<<1)+1];
+			r[j] ^= _mm256_shuffle_epi8( tab_0 , low1_low0 ) ^ _mm256_shuffle_epi8( tab_1 , high1_high0 );
+		}
+	}
+
+	tr_16x16_b2_avx2( r32 , r32 );
+}
+
+
+
+
+static inline
+void bitmatrix_prod_64x128_4R_b32_opt_avx2( uint8_t * r128_32 , const uint64_t * matB4R , const uint8_t *a64_32 )
+{
+	uint8_t t32[32*8] __attribute__((aligned(32)));
+	/// 0x10,0x11,0x12,.....0x2f
+	tr_8x8_b4_avx2( t32 , a64_32 , 32 );
+	/// bitsliced: 0x10,0x14,0x18,0x1c, 0x20,0x24,0x28,0x2c, 0x11,0x15,0x19,0x1d, 0x21,0x25,0x29,0x2d, |
+	///            0x12,0x16,0x1a,0x1e, 0x22,0x26,0x2a,0x2e, 0x13,0x17,0x1b,0x1f, 0x23,0x27,0x2b,0x2f,
+
+	__m256i *r = (__m256i*) r128_32;
+	const __m256i * tab = (const __m256i*) & matB4R[0];
+	__m256i _0xf = _mm256_set1_epi8(0xf);
+
+	for(unsigned i=0;i<8;i++) r[i] = _mm256_setzero_si256();
+	for(unsigned i=0;i<8;i++) { ///
+		__m256i temp = _mm256_load_si256( (__m256i*)(t32 + i*32) );
+		__m256i low1_low0 = temp&_0xf;
+		__m256i high1_high0 = _mm256_srli_epi16( _mm256_andnot_si256( _0xf ,  temp ) , 4 );
+
+		for(unsigned j=0;j<8;j++) {
+			__m256i tab_0 = tab[i*16+(j<<1)];
+			__m256i tab_1 = tab[i*16+(j<<1)+1];
+			r[j] ^= _mm256_shuffle_epi8( tab_0 , low1_low0 ) ^ _mm256_shuffle_epi8( tab_1 , high1_high0 );
+		}
+	}
+	tab += 16*16;
+	r += 8;
+	for(unsigned i=0;i<8;i++) r[i] = _mm256_setzero_si256();
+	for(unsigned i=0;i<8;i++) { ///
+		__m256i temp = _mm256_load_si256( (__m256i*)(t32 + i*32) );
+		__m256i low1_low0 = temp&_0xf;
+		__m256i high1_high0 = _mm256_srli_epi16( _mm256_andnot_si256( _0xf ,  temp ) , 4 );
+
+		for(unsigned j=0;j<8;j++) {
+			__m256i tab_0 = tab[i*16+(j<<1)];
+			__m256i tab_1 = tab[i*16+(j<<1)+1];
+			r[j] ^= _mm256_shuffle_epi8( tab_0 , low1_low0 ) ^ _mm256_shuffle_epi8( tab_1 , high1_high0 );
+		}
+	}
+
+	/// bitsliced: 0x10,0x14,0x18,0x1c, 0x20,0x24,0x28,0x2c, 0x11,0x15,0x19,0x1d, 0x21,0x25,0x29,0x2d, |
+	///            0x12,0x16,0x1a,0x1e, 0x22,0x26,0x2a,0x2e, 0x13,0x17,0x1b,0x1f, 0x23,0x27,0x2b,0x2f,
+	tr_16x16_b2_avx2( r128_32 , r128_32 );
+	/// 0x10,0x12,0x14,....,0x2e,0x11,0x13,0x15,....,0x2d,0x2f
+}
+
+
+
+
 #endif

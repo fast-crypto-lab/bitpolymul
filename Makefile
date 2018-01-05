@@ -2,15 +2,15 @@ CC=    gcc
 CXX=   g++
 LD=    gcc
 
-CFLAGS= -O3 -mavx2 -mpclmul -std=gnu99 -Wextra #-Wall
-CXXFLAGS= -O3 -mavx2 -mpclmul -fno-exceptions -fno-rtti -nostdinc++ -Wextra -Wall
+CFLAGS= -O3 -funroll-loops -mavx2 -mpclmul -std=gnu99 -Wextra -Wall
+CXXFLAGS= -O3  -mavx2 -mpclmul -fno-exceptions -fno-rtti -nostdinc++ -Wextra -Wall
 INCPATH= -I/usr/local/include -I/opt/local/include -I/usr/include #-I../../nist-mq-submission/gf2-dev/
 LDFLAGS= 
 LIBPATH= -L/usr/local/lib -L/opt/local/lib -L/usr/lib #-L../gf2-dev/
 LIBS=    #-lm -lcrypto -lgf2x
 
 
-OBJ= bc.o bitpolymul.o gf2128_tower_iso.o butterfly_net.o gf16.o ska.o gf2256_tower_iso.o gf2128_cantor_iso.o btfy.o bc_tab.o trunc_btfy_tab.o
+OBJ= bc.o bitpolymul.o encode.o gf2128_tower_iso.o butterfly_net.o gf16.o ska.o gf2256_tower_iso.o gf2128_cantor_iso.o btfy.o trunc_btfy_tab.o
 EXE= bitpolymul-test #bc-test
 
 

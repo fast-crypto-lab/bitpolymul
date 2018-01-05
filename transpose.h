@@ -113,6 +113,16 @@ void tr_16x16_b2_from_4x4_b8( uint8_t * r , const uint8_t * a ) {
 	tr_16x16_b2_from_4x4_b8_1_4( r+32*3 , a+32*3 );
 }
 
+static inline
+void tr_16x16_b2_avx2( uint8_t * r , const uint8_t * a ) {
+	uint8_t temp[32*16] __attribute__((aligned(32)));
+	for(unsigned i=0;i<4;i++) tr_avx2_4x4_b8( temp + i*32*4 , a + i*32*4 );
+	tr_16x16_b2_from_4x4_b8_1_4( r , temp );
+	tr_16x16_b2_from_4x4_b8_1_4( r+32 , temp+32 );
+	tr_16x16_b2_from_4x4_b8_1_4( r+32*2 , temp+32*2 );
+	tr_16x16_b2_from_4x4_b8_1_4( r+32*3 , temp+32*3 );
+}
+
 /////////////////////////////////////
 
 

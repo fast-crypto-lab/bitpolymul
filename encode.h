@@ -17,12 +17,11 @@ You should have received a copy of the GNU Lesser General Public License
 along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _ENCODE_H_
+#define _ENCODE_H_
 
-#ifndef _BC_TAB_H_
-#define _BC_TAB_H_
 
 #include <stdint.h>
-
 
 
 #ifdef  __cplusplus
@@ -30,27 +29,20 @@ extern  "C" {
 #endif
 
 
-extern uint64_t bc_tab_from_mono_128[];
 
-extern uint64_t bc_tab_from_mono_256_h128[];
 
-extern uint64_t bc_tab_to_mono_128[];
+void encode_half_inp( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
 
-extern uint64_t bc_tab_to_mono_256_h128[];
+void encode( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
 
-extern uint64_t bc_tab_from_mono_128_m4r[];
+void decode( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
 
-extern uint64_t bc_tab_from_mono_256_h128_m4r[];
 
-extern uint64_t bc_tab_to_mono_128_m4r[];
-
-extern uint64_t bc_tab_to_mono_256_h128_m4r[];
 
 
 #ifdef  __cplusplus
 }
 #endif
-
 
 
 #endif

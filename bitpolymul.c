@@ -179,8 +179,10 @@ void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 	if( 4 > n_64 ) n_64 = 4;
 
 	uint64_t * a_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64 );
+		//uint64_t * a_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64*2 );
 	if( NULL == a_bc ) { printf("alloc fail.\n"); exit(-1); }
 	uint64_t * b_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64 );
+		//uint64_t * b_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64*2 );
 	if( NULL == b_bc ) { printf("alloc fail.\n"); exit(-1); }
 
 #ifdef _PROFILE_
@@ -190,13 +192,13 @@ bm_start(&bm_bc);
 	for(unsigned i=_n_64;i<n_64;i++) a_bc[i] = 0;
 	//bc_to_lch_2( a_bc , n_64 );
 	bc_to_lch_2_unit256( a_bc , n_64 );
-	//for(unsigned i=n_64;i<n_64*2;i++) a_bc[i] = 0;
+		//for(unsigned i=n_64;i<n_64*2;i++) a_bc[i] = 0;
 
 	memcpy( b_bc , b , sizeof(uint64_t)*_n_64 );
 	for(unsigned i=_n_64;i<n_64;i++) b_bc[i] = 0;
 	//bc_to_lch_2( b_bc , n_64 );
 	bc_to_lch_2_unit256( b_bc , n_64 );
-	//for(unsigned i=n_64;i<n_64*2;i++) b_bc[i] = 0;
+		//for(unsigned i=n_64;i<n_64*2;i++) b_bc[i] = 0;
 
 #ifdef _PROFILE_
 bm_stop(&bm_bc);
@@ -213,10 +215,10 @@ bm_stop(&bm_bc);
 bm_start(&bm_tr);
 #endif
 	encode_half_inp( a_fx , a_bc , n_terms );
-	//encode( a_fx , a_bc , n_terms );
+		//encode( a_fx , a_bc , n_terms );
 
 	encode_half_inp( b_fx , b_bc , n_terms );
-	//encode( b_fx , b_bc , n_terms );
+		//encode( b_fx , b_bc , n_terms );
 
 #ifdef _PROFILE_
 bm_stop(&bm_tr);

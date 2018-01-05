@@ -36,14 +36,6 @@ void i_btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a );
 
 
 
-void encode_half_inp( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
-
-void encode( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
-
-void decode( uint64_t * rfx , const uint64_t * fx , unsigned n_fx_128b );
-
-
-
 
 #ifdef  __cplusplus
 }
