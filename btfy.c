@@ -76,26 +76,12 @@ __m128i butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra
 	unsigned unit_2= unit/2;
 	for(unsigned i=0;i<unit_2;i++) {
 		poly[i] ^= _gf2ext128_mul_sse( poly[unit_2+i] , a );
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+1] , _MM_HINT_T0 );
 		poly[unit_2+i] ^= poly[i];
 	}
 	return a;
 }
-
-
-static inline
-__m128i i_butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
-{
-	__m128i a = extra_a;
-	a ^= gf_isomorphism( ska );
-
-	unsigned unit_2= unit/2;
-	for(unsigned i=0;i<unit_2;i++) {
-		poly[unit_2+i] ^= poly[i];
-		poly[i] ^= _gf2ext128_mul_sse( poly[unit_2+i] , a );
-	}
-	return a;
-}
-
 
 
 
@@ -108,10 +94,118 @@ __m128i butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128i 
 	unsigned unit_2= unit/2;
 	for(unsigned i=0;i<unit_2;i++) {
 		poly[i] ^= _gf2ext128_mul_2x1_avx2( poly[unit_2+i] , a );
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+1] , _MM_HINT_T0 );
 		poly[unit_2+i] ^= poly[i];
 	}
 	return a;
 }
+
+
+static inline
+__m128i butterfly_avx2_b2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+{
+	__m128i a = extra_a;
+	a ^= gf_isomorphism( ska );
+
+	unsigned unit_2= unit/2;
+	for(unsigned i=0;i<unit_2;i+=2) {
+		__m256i p0 = _mm256_load_si256( &poly[unit_2+i] );
+		__m256i p1 = _mm256_load_si256( &poly[unit_2+i+1] );
+		_mm_prefetch( &poly[i] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		__m256i ap0 = _gf2ext128_mul_2x1_avx2( p0 , a );
+		__m256i ap1 = _gf2ext128_mul_2x1_avx2( p1 , a );
+
+		__m256i q0 = _mm256_load_si256( &poly[i] );
+		__m256i q1 = _mm256_load_si256( &poly[i+1] );
+
+		_mm_prefetch( &poly[unit_2+i+2] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+3] , _MM_HINT_T0 );
+
+		q0 ^= ap0;
+		q1 ^= ap1;
+		_mm256_store_si256( &poly[i] , q0 );
+		_mm256_store_si256( &poly[i+1] , q1 );
+		p0 ^= q0;
+		p1 ^= q1;
+		_mm256_store_si256( &poly[unit_2+i] , p0 );
+		_mm256_store_si256( &poly[unit_2+i+1] , p1 );
+	}
+	return a;
+}
+
+
+static inline
+__m128i butterfly_avx2_b4( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+{
+	__m128i a = extra_a;
+	a ^= gf_isomorphism( ska );
+
+	unsigned unit_2= unit/2;
+	for(unsigned i=0;i<unit_2;i+=4) {
+		__m256i p0 = _mm256_load_si256( &poly[unit_2+i] );
+		__m256i p1 = _mm256_load_si256( &poly[unit_2+i+1] );
+		__m256i p2 = _mm256_load_si256( &poly[unit_2+i+2] );
+		__m256i p3 = _mm256_load_si256( &poly[unit_2+i+3] );
+		_mm_prefetch( &poly[i] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+2] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+3] , _MM_HINT_T0 );
+		__m256i ap0 = _gf2ext128_mul_2x1_avx2( p0 , a );
+		__m256i ap1 = _gf2ext128_mul_2x1_avx2( p1 , a );
+		__m256i ap2 = _gf2ext128_mul_2x1_avx2( p2 , a );
+		__m256i ap3 = _gf2ext128_mul_2x1_avx2( p3 , a );
+
+		__m256i q0 = _mm256_load_si256( &poly[i] );
+		__m256i q1 = _mm256_load_si256( &poly[i+1] );
+		__m256i q2 = _mm256_load_si256( &poly[i+2] );
+		__m256i q3 = _mm256_load_si256( &poly[i+3] );
+
+		_mm_prefetch( &poly[unit_2+i+4] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+5] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+6] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+7] , _MM_HINT_T0 );
+
+		q0 ^= ap0;
+		q1 ^= ap1;
+		q2 ^= ap2;
+		q3 ^= ap3;
+		_mm256_store_si256( &poly[i] , q0 );
+		_mm256_store_si256( &poly[i+1] , q1 );
+		_mm256_store_si256( &poly[i+2] , q2 );
+		_mm256_store_si256( &poly[i+3] , q3 );
+		p0 ^= q0;
+		p1 ^= q1;
+		p2 ^= q2;
+		p3 ^= q3;
+		_mm256_store_si256( &poly[unit_2+i] , p0 );
+		_mm256_store_si256( &poly[unit_2+i+1] , p1 );
+		_mm256_store_si256( &poly[unit_2+i+2] , p2 );
+		_mm256_store_si256( &poly[unit_2+i+3] , p3 );
+	}
+	return a;
+}
+
+
+
+
+static inline
+__m128i i_butterfly( __m128i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+{
+	__m128i a = extra_a;
+	a ^= gf_isomorphism( ska );
+
+	unsigned unit_2= unit/2;
+	for(unsigned i=0;i<unit_2;i++) {
+		poly[unit_2+i] ^= poly[i];
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+1] , _MM_HINT_T0 );
+		poly[i] ^= _gf2ext128_mul_sse( poly[unit_2+i] , a );
+	}
+	return a;
+}
+
 
 
 static inline
@@ -123,7 +217,97 @@ __m128i i_butterfly_avx2( __m256i * poly , unsigned unit , unsigned ska , __m128
 	unsigned unit_2= unit/2;
 	for(unsigned i=0;i<unit_2;i++) {
 		poly[unit_2+i] ^= poly[i];
+		_mm_prefetch( &poly[i+1] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+1] , _MM_HINT_T0 );
 		poly[i] ^= _gf2ext128_mul_2x1_avx2( poly[unit_2+i] , a );
+	}
+	return a;
+}
+
+static inline
+__m128i i_butterfly_avx2_b2( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+{
+	__m128i a = extra_a;
+	a ^= gf_isomorphism( ska );
+
+	unsigned unit_2= unit/2;
+	for(unsigned i=0;i<unit_2;i+=2) {
+		__m256i p0 = _mm256_load_si256( &poly[unit_2+i] );
+		__m256i p1 = _mm256_load_si256( &poly[unit_2+i+1] );
+
+		__m256i q0 = _mm256_load_si256( &poly[i] );
+		__m256i q1 = _mm256_load_si256( &poly[i+1] );
+
+		p0 ^= q0;
+		p1 ^= q1;
+		_mm256_store_si256( &poly[unit_2+i] , p0 );
+		_mm256_store_si256( &poly[unit_2+i+1] , p1 );
+		_mm_prefetch( &poly[i+2] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+3] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+2] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+3] , _MM_HINT_T0 );
+
+		__m256i ap0 = _gf2ext128_mul_2x1_avx2( p0 , a );
+		__m256i ap1 = _gf2ext128_mul_2x1_avx2( p1 , a );
+
+		q0 ^= ap0;
+		q1 ^= ap1;
+		_mm256_store_si256( &poly[i] , q0 );
+		_mm256_store_si256( &poly[i+1] , q1 );
+	}
+	return a;
+}
+
+
+
+static inline
+__m128i i_butterfly_avx2_b4( __m256i * poly , unsigned unit , unsigned ska , __m128i extra_a )
+{
+	__m128i a = extra_a;
+	a ^= gf_isomorphism( ska );
+
+	unsigned unit_2= unit/2;
+	for(unsigned i=0;i<unit_2;i+=4) {
+		__m256i p0 = _mm256_load_si256( &poly[unit_2+i] );
+		__m256i p1 = _mm256_load_si256( &poly[unit_2+i+1] );
+		__m256i p2 = _mm256_load_si256( &poly[unit_2+i+2] );
+		__m256i p3 = _mm256_load_si256( &poly[unit_2+i+3] );
+
+		__m256i q0 = _mm256_load_si256( &poly[i] );
+		__m256i q1 = _mm256_load_si256( &poly[i+1] );
+		__m256i q2 = _mm256_load_si256( &poly[i+2] );
+		__m256i q3 = _mm256_load_si256( &poly[i+3] );
+
+		p0 ^= q0;
+		p1 ^= q1;
+		p2 ^= q2;
+		p3 ^= q3;
+		_mm256_store_si256( &poly[unit_2+i] , p0 );
+		_mm256_store_si256( &poly[unit_2+i+1] , p1 );
+		_mm256_store_si256( &poly[unit_2+i+2] , p2 );
+		_mm256_store_si256( &poly[unit_2+i+3] , p3 );
+		_mm_prefetch( &poly[i+4] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+5] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+6] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[i+7] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+4] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+5] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+6] , _MM_HINT_T0 );
+		_mm_prefetch( &poly[unit_2+i+7] , _MM_HINT_T0 );
+
+		__m256i ap0 = _gf2ext128_mul_2x1_avx2( p0 , a );
+		__m256i ap1 = _gf2ext128_mul_2x1_avx2( p1 , a );
+		__m256i ap2 = _gf2ext128_mul_2x1_avx2( p2 , a );
+		__m256i ap3 = _gf2ext128_mul_2x1_avx2( p3 , a );
+
+		q0 ^= ap0;
+		q1 ^= ap1;
+		q2 ^= ap2;
+		q3 ^= ap3;
+		_mm256_store_si256( &poly[i] , q0 );
+		_mm256_store_si256( &poly[i+1] , q1 );
+		_mm256_store_si256( &poly[i+2] , q2 );
+		_mm256_store_si256( &poly[i+3] , q3 );
 	}
 	return a;
 }
@@ -139,6 +323,38 @@ void __btfy( uint64_t * fx , unsigned st_unit_size , unsigned offset , unsigned 
 	unsigned i= st_unit_size;
 
 	__m256i * poly256 = (__m256i*) &fx[0];
+#if 1
+	for( ; i>3 ; i--) {
+		unsigned unit = (1<<(i-1));
+		unsigned num = (n_terms>>1) / unit;
+
+		unsigned k = i-1;
+		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+
+		unsigned last_j = 0;
+		unsigned st = (offset>>1)/unit;
+		for(unsigned j= st;j<st+num;j++) {
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = butterfly_avx2_b4( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+		}
+	}
+	for( ; i>2 ; i--) {
+		unsigned unit = (1<<(i-1));
+		unsigned num = (n_terms>>1) / unit;
+
+		unsigned k = i-1;
+		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+
+		unsigned last_j = 0;
+		unsigned st = (offset>>1)/unit;
+		for(unsigned j= st;j<st+num;j++) {
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = butterfly_avx2_b2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+		}
+	}
+#endif
 	for( ; i>1 ; i--) {
 		unsigned unit = (1<<(i-1));
 		unsigned num = (n_terms>>1) / unit;
@@ -195,7 +411,7 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 	}
 
 	__m256i *poly256 = (__m256i*) &fx[0];
-	for( ; i <= end_unit_size; i++) {
+	for( ; i < 3; i++) {
 		unsigned unit = (1<<(i-1));
 		unsigned num = (n_terms>>1) / unit;
 
@@ -208,6 +424,37 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 			unsigned diff_j = j^last_j;
 			last_j = j;
 			extra_a = i_butterfly_avx2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+		}
+	}
+	for( ; i < 4; i++) {
+		unsigned unit = (1<<(i-1));
+		unsigned num = (n_terms>>1) / unit;
+
+		unsigned k = i-1;
+		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+
+		unsigned last_j = 0;
+		unsigned st = (offset>>1)/unit;
+		for(unsigned j=st;j<st+num;j++) {
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = i_butterfly_avx2_b2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+		}
+	}
+
+	for( ; i <= end_unit_size; i++) {
+		unsigned unit = (1<<(i-1));
+		unsigned num = (n_terms>>1) / unit;
+
+		unsigned k = i-1;
+		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+
+		unsigned last_j = 0;
+		unsigned st = (offset>>1)/unit;
+		for(unsigned j=st;j<st+num;j++) {
+			unsigned diff_j = j^last_j;
+			last_j = j;
+			extra_a = i_butterfly_avx2_b4( poly256 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 
@@ -252,7 +499,7 @@ void btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		for(unsigned j=0;j<num;j++) {
 			unsigned diff_j = j^last_j;
 			last_j = j;
-			extra_a = butterfly_avx2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+			extra_a = butterfly_avx2_b4( poly256 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 	//// i == 15 or less
@@ -291,7 +538,7 @@ void i_btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		for(unsigned j=0;j<num;j++) {
 			unsigned diff_j = j^last_j;
 			last_j = j;
-			extra_a = i_butterfly_avx2( poly256 + j*unit , unit , diff_j<<1 , extra_a );
+			extra_a = i_butterfly_avx2_b4( poly256 + j*unit , unit , diff_j<<1 , extra_a );
 		}
 	}
 
