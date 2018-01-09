@@ -177,7 +177,7 @@ void bitpolymul_2( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 		n_64 = 1<<log_2_n64;
 	}
 
-	if( 4 > n_64 ) n_64 = 4;
+	if( 256 > n_64 ) n_64 = 256;
 
 	uint64_t * a_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64 );
 		//uint64_t * a_bc = (uint64_t*)aligned_alloc( 32 , sizeof(uint64_t)*n_64*2 );
