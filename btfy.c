@@ -329,7 +329,7 @@ void __btfy( uint64_t * fx , unsigned st_unit_size , unsigned offset , unsigned 
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -344,7 +344,7 @@ void __btfy( uint64_t * fx , unsigned st_unit_size , unsigned offset , unsigned 
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -360,7 +360,7 @@ void __btfy( uint64_t * fx , unsigned st_unit_size , unsigned offset , unsigned 
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -376,7 +376,7 @@ void __btfy( uint64_t * fx , unsigned st_unit_size , unsigned offset , unsigned 
 		unsigned num = n_terms / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st=offset/unit;
@@ -399,7 +399,7 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 		unsigned num = n_terms / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st=offset/unit;
@@ -416,7 +416,7 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -431,7 +431,7 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -447,7 +447,7 @@ void __i_btfy( uint64_t * fx , unsigned end_unit_size , unsigned offset , unsign
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		unsigned st = (offset>>1)/unit;
@@ -493,7 +493,7 @@ void btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
@@ -532,7 +532,7 @@ void i_btfy( uint64_t * fx , unsigned n_fx , unsigned scalar_a )
 		unsigned num = (n_terms>>1) / unit;
 
 		unsigned k = i-1;
-		__m128i extra_a = (scalar_a - k > 0 ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
+		__m128i extra_a = (scalar_a > k ) ? gf_isomorphism_single_bit( (scalar_a-k-1)<<1 ) : _mm_setzero_si128();
 
 		unsigned last_j = 0;
 		for(unsigned j=0;j<num;j++) {
