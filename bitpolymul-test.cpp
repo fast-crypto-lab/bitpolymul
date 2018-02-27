@@ -29,7 +29,7 @@ void polymul_gf2x( uint64_t * c , const uint64_t * a , const uint64_t * b , unsi
 #define TOSTRING(x) STRINGIFY(x)
 
 //#define bm_func1 bitpolymul_simple
-#define bm_func1 bitpolymul_2
+#define bm_func1 bitpolymul_256
 //#define bm_func1 bitpolymul_128
 //#define bm_func1 bitpolymul
 #define n_fn1 "fn:" TOSTRING(bm_func1) "()"
